@@ -134,6 +134,21 @@ app.get('/api/users', authMiddleware, async (req: Request, res: Response): Promi
   }
 });
 
+// Get current user info
+app.get('/api/me', authMiddleware, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user.id;
+    const user = await User.findOne({ id: userId }, { password: 0 });
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+    res.json({ id: user.id, name: user.name, email: user.email });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch user info' });
+  }
+});
+
 io.on('connection', (socket) => {
   console.log('🟢 User connected:', socket.id);
 

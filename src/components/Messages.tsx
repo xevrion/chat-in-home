@@ -17,9 +17,17 @@ type Props = {
 };
 
 export default function Messages({ messages, username, isTyping, typingUser, bottomRef }: Props) {
+  // Only auto-scroll if user is at bottom or new message is sent by self
   useEffect(() => {
-    bottomRef?.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, bottomRef]);
+    if (!bottomRef?.current) return;
+    const container = bottomRef.current.parentElement;
+    if (!container) return;
+    const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 50;
+    const lastMsg = messages[messages.length - 1];
+    if (isAtBottom || (lastMsg && lastMsg.sender === username)) {
+      bottomRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, bottomRef, username]);
 
   function getTickIcon(status: "sent" | "delivered" | "seen") {
     if (status === "sent") return "✓"; // 1 gray tick

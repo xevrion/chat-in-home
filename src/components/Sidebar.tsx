@@ -14,6 +14,7 @@ interface SidebarProps {
   selectedUserId: string;
   currentUser: User;
   onlineUsers: string[];
+  setUsersLoaded?: (v: boolean) => void;
 }
 
 export default function Sidebar({
@@ -21,6 +22,7 @@ export default function Sidebar({
   selectedUserId,
   currentUser,
   onlineUsers,
+  setUsersLoaded
 }: SidebarProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,11 +31,14 @@ export default function Sidebar({
     axios.get(`${API}/api/users`)
       .then(res => setUsers(res.data))
       .catch(err => console.error('Failed to fetch users', err))
-      .finally(() => setLoading(false));
-  }, []);
+      .finally(() => {
+        setLoading(false);
+        setUsersLoaded && setUsersLoaded(true);
+      });
+  }, [setUsersLoaded]);
 
   if (loading) {
-    return <div className="p-4">Loading users...</div>;
+    return <div className="p-4 text-gray-500">Loading users...</div>;
   }
 
   return (

@@ -18,6 +18,7 @@ type ChatProps = {
   messages: ChatMap;
   setMessages: React.Dispatch<React.SetStateAction<ChatMap>>;
   onlineUsers?: string[];
+  setChatLoaded?: (v: boolean) => void;
 };
 
 const statusRank = (status: string) => {
@@ -42,6 +43,7 @@ export default function Chat({
   messages,
   setMessages,
   onlineUsers = [],
+  setChatLoaded
 }: ChatProps) {
   const [receiver, setReceiver] = useState<any>(null);
   const chatId = getChatId(username, receiverId);
@@ -53,9 +55,12 @@ export default function Chat({
   useEffect(() => {
     if (!receiverId) return;
     axios.get(`${API}/api/users/${receiverId}`)
-      .then(res => setReceiver(res.data))
+      .then(res => {
+        setReceiver(res.data);
+        setChatLoaded && setChatLoaded(true);
+      })
       .catch(() => setReceiver(null));
-  }, [receiverId]);
+  }, [receiverId, setChatLoaded]);
 
   // Auto-scroll to bottom on new message
   useEffect(() => {
@@ -137,6 +142,9 @@ export default function Chat({
     };
   }, [username, receiverId]);
 
+  if (!receiver) {
+    return <div className="flex-1 flex items-center justify-center text-gray-500">Loading chat...</div>;
+  }
   return (
     <div className="flex flex-col flex-1 bg-gray-100 dark:bg-gray-950 min-h-0">
       <ChatHeader user={receiver} onlineUsers={onlineUsers} />

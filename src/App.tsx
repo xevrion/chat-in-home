@@ -24,6 +24,13 @@ type ChatMap = { [key: string]: Message[] };
 
 type User = { id: string; name: string; email: string };
 
+// Global loader state
+const [globalLoading, setGlobalLoading] = useState(true);
+
+// Track when users and chat receiver are loaded
+const [usersLoaded, setUsersLoaded] = useState(false);
+const [chatLoaded, setChatLoaded] = useState(false);
+
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
@@ -119,6 +126,18 @@ function App() {
     };
   }, [user]);
 
+  // On mount, if token exists but user is null, fetch user info
+  useEffect(() => {
+    if (token && !user) {
+      axios.get(`${import.meta.env.VITE_API_URL}/api/me`)
+        .then(res => setUser(res.data))
+        .catch(() => {
+          setToken(null);
+          localStorage.removeItem('token');
+        });
+    }
+  }, [token, user]);
+
   // Logout handler
   const handleLogout = () => {
     setUser(null);
@@ -128,8 +147,26 @@ function App() {
     localStorage.removeItem('token');
   };
 
+  // Show loader until both are loaded
+  useEffect(() => {
+    if (usersLoaded && (selectedUserId ? chatLoaded : true)) {
+      setGlobalLoading(false);
+    } else {
+      setGlobalLoading(true);
+    }
+  }, [usersLoaded, chatLoaded, selectedUserId]);
+
   if (!user || !token) {
     return <AuthForm onLogin={(user, token) => { setUser(user); setToken(token); }} theme={theme} setTheme={setTheme} />;
+  }
+
+  if (globalLoading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-white dark:bg-gray-900 z-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <span className="ml-4 text-lg text-gray-700 dark:text-gray-200">Loading app...</span>
+      </div>
+    );
   }
 
   return (
@@ -156,6 +193,7 @@ function App() {
               selectedUserId={selectedUserId}
               currentUser={user!}
               onlineUsers={onlineUsers}
+              setUsersLoaded={setUsersLoaded}
             />
           )}
         </div>
@@ -180,6 +218,7 @@ function App() {
                   messages={messages}
                   setMessages={setMessages}
                   onlineUsers={onlineUsers}
+                  setChatLoaded={setChatLoaded}
                 />
               </div>
             </div>
@@ -211,6 +250,7 @@ function App() {
                 selectedUserId={selectedUserId}
                 currentUser={user!}
                 onlineUsers={onlineUsers}
+                setUsersLoaded={setUsersLoaded}
               />
             </motion.div>
           ) : (
@@ -250,6 +290,7 @@ function App() {
                   messages={messages}
                   setMessages={setMessages}
                   onlineUsers={onlineUsers}
+                  setChatLoaded={setChatLoaded}
                 />
               </div>
             </motion.div>
