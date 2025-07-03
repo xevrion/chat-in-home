@@ -4,7 +4,7 @@ import MessageInput from "./MessageInput";
 import { socket } from "../lib/socket";
 import users from "../data/users";
 import type { Message } from "../App";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 
 const API = import.meta.env.VITE_API_URL;
@@ -48,6 +48,8 @@ export default function Chat({
   const chatId = getChatId(username, receiverId);
   const chatMessages = messages[chatId] || [];
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingUser, setTypingUser] = useState<string | null>(null);
 
   // Auto-scroll to bottom on new message
   useEffect(() => {
@@ -113,6 +115,22 @@ export default function Chat({
     fetchHistory();
   }, [username, receiverId]);
 
+  // Typing indicator logic
+  useEffect(() => {
+    function handleTyping({ sender, receiver }: { sender: string; receiver: string }) {
+      if (receiver === username && sender === receiverId) {
+        setIsTyping(true);
+        setTypingUser(sender);
+        // Hide after 2s
+        setTimeout(() => setIsTyping(false), 2000);
+      }
+    }
+    socket.on("chat:typing", handleTyping);
+    return () => {
+      socket.off("chat:typing", handleTyping);
+    };
+  }, [username, receiverId]);
+
   return (
     <div className="flex flex-col flex-1 bg-gray-100 dark:bg-gray-950 min-h-0">
       <ChatHeader user={receiver} onlineUsers={onlineUsers} />
@@ -120,8 +138,8 @@ export default function Chat({
         <Messages
           messages={chatMessages}
           username={username}
-          isTyping={false}
-          typingUser={null}
+          isTyping={isTyping}
+          typingUser={typingUser}
           bottomRef={bottomRef}
         />
       </div>

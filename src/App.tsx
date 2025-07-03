@@ -49,38 +49,6 @@ function App() {
     }
   }, [user]);
 
-  // Load messages from localStorage when user changes
-  useEffect(() => {
-    if (!user) return;
-    const storageKey = `chat-messages-${user.id}`;
-    const stored = localStorage.getItem(storageKey);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        Object.keys(parsed).forEach((chatId) => {
-          parsed[chatId] = (parsed[chatId] as any[]).map((msg: any) => ({
-            ...msg,
-            date: new Date(msg.date),
-            status: (msg.status === 'sent' || msg.status === 'delivered' || msg.status === 'seen') ? msg.status as 'sent' | 'delivered' | 'seen' : 'sent',
-          })) as Message[];
-        });
-        setMessages(parsed as ChatMap);
-      } catch (e) {
-        console.error("Failed to parse messages from localStorage", e);
-      }
-    } else {
-      setMessages({});
-    }
-  }, [user]);
-
-  // Save messages to localStorage whenever they change
-  useEffect(() => {
-    if (user) {
-      const storageKey = `chat-messages-${user.id}`;
-      localStorage.setItem(storageKey, JSON.stringify(messages));
-    }
-  }, [messages, user]);
-
   useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');

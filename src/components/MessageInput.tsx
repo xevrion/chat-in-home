@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { socket } from "../lib/socket";
 
 type Props = {
@@ -9,6 +9,7 @@ type Props = {
 
 export default function MessageInput({ onSend, username, receiverId }: Props) {
   const [text, setText] = useState("");
+  const typingTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const handleSend = () => {
     if (text.trim() === "") return;
@@ -25,11 +26,17 @@ export default function MessageInput({ onSend, username, receiverId }: Props) {
         value={text}
         onChange={(e) => {
           setText(e.target.value);
-          console.log("TYPING EMIT:", username, "->", receiverId); // 👈 test
-          socket.emit("chat:typing", {
-            sender: username,
-            receiver: receiverId,
-          });
+          if (username !== receiverId) {
+            if (!typingTimeout.current) {
+              socket.emit("chat:typing", {
+                sender: username,
+                receiver: receiverId,
+              });
+              typingTimeout.current = setTimeout(() => {
+                typingTimeout.current = null;
+              }, 1000);
+            }
+          }
         }}
         onKeyDown={(e) => e.key === "Enter" && handleSend()}
       />
