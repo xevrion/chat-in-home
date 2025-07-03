@@ -26,7 +26,7 @@ type User = { id: string; name: string; email: string };
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
   const [messages, setMessages] = useState<ChatMap>({});
