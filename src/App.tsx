@@ -179,15 +179,17 @@ function App() {
       {/* DESKTOP layout */}
       <div className="hidden lg:flex w-full">
         <div className="w-64 border-r bg-gray-100 h-screen">
-          <Sidebar
-            onSelectUser={(id: string) => {
-              setDirection("forward");
-              setSelectedUserId(id);
-            }}
-            selectedUserId={selectedUserId}
-            currentUser={user!}
-            onlineUsers={onlineUsers}
-          />
+          {token && (
+            <Sidebar
+              onSelectUser={(id: string) => {
+                setDirection("forward");
+                setSelectedUserId(id);
+              }}
+              selectedUserId={selectedUserId}
+              currentUser={user!}
+              onlineUsers={onlineUsers}
+            />
+          )}
         </div>
         <div className="flex-1 flex flex-col h-full">
           {selectedUserId ? (
