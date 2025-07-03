@@ -149,6 +149,100 @@ app.get('/api/me', authMiddleware, async (req: Request, res: Response): Promise<
   }
 });
 
+// --- FRIEND SYSTEM ENDPOINTS ---
+
+// Send a friend request
+app.post('/api/friend-request', authMiddleware, async (req: Request, res: Response): Promise<void> => {
+  const fromId = (req as any).user.id;
+  const { to } = req.body;
+  if (!to || fromId === to) { res.status(400).json({ error: 'Invalid user' }); return; }
+  const toUser = await User.findOne({ id: to });
+  if (!toUser) { res.status(404).json({ error: 'User not found' }); return; }
+  if (toUser.friends.includes(fromId)) { res.status(409).json({ error: 'Already friends' }); return; }
+  const alreadyRequested = toUser.friendRequests.some(r => r.from === fromId && r.to === to && r.status === 'pending');
+  if (alreadyRequested) { res.status(409).json({ error: 'Request already sent' }); return; }
+  toUser.friendRequests.push({ from: fromId, to, status: 'pending' });
+  await toUser.save();
+  res.json({ message: 'Friend request sent' });
+});
+
+// Get all friend requests (incoming and outgoing)
+app.get('/api/friend-requests', authMiddleware, async (req: Request, res: Response): Promise<void> => {
+  const userId = (req as any).user.id;
+  const user = await User.findOne({ id: userId });
+  if (!user) { res.status(404).json({ error: 'User not found' }); return; }
+  const incoming = user.friendRequests.filter(r => r.to === userId && r.status === 'pending');
+  const outgoing = (await User.find({ 'friendRequests.from': userId })).flatMap(u =>
+    u.friendRequests.filter(r => r.from === userId && r.status === 'pending')
+  );
+  res.json({ incoming, outgoing });
+});
+
+// Accept a friend request
+app.post('/api/friend-request/:requestId/accept', authMiddleware, async (req: Request, res: Response): Promise<void> => {
+  const userId = (req as any).user.id;
+  const { requestId } = req.params;
+  const user = await User.findOne({ id: userId });
+  if (!user) { res.status(404).json({ error: 'User not found' }); return; }
+  const request = user.friendRequests.find(r => r._id && r._id.toString() === requestId);
+  if (!request || request.to !== userId || request.status !== 'pending') { res.status(404).json({ error: 'Request not found' }); return; }
+  request.status = 'accepted';
+  if (!user.friends.includes(request.from)) user.friends.push(request.from);
+  await user.save();
+  const fromUser = await User.findOne({ id: request.from });
+  if (fromUser) {
+    if (!fromUser.friends.includes(userId)) fromUser.friends.push(userId);
+    fromUser.friendRequests = fromUser.friendRequests.map(r =>
+      (r.from === userId && r.to === fromUser.id && r.status === 'pending') ? { ...r, status: 'accepted' } : r
+    );
+    await fromUser.save();
+  }
+  res.json({ message: 'Friend request accepted' });
+});
+
+// Decline a friend request
+app.post('/api/friend-request/:requestId/decline', authMiddleware, async (req: Request, res: Response): Promise<void> => {
+  const userId = (req as any).user.id;
+  const { requestId } = req.params;
+  const user = await User.findOne({ id: userId });
+  if (!user) { res.status(404).json({ error: 'User not found' }); return; }
+  const request = user.friendRequests.find(r => r._id && r._id.toString() === requestId);
+  if (!request || request.to !== userId || request.status !== 'pending') { res.status(404).json({ error: 'Request not found' }); return; }
+  request.status = 'declined';
+  await user.save();
+  res.json({ message: 'Friend request declined' });
+});
+
+// Get friends list
+app.get('/api/friends', authMiddleware, async (req: Request, res: Response): Promise<void> => {
+  const userId = (req as any).user.id;
+  const user = await User.findOne({ id: userId });
+  if (!user) { res.status(404).json({ error: 'User not found' }); return; }
+  const friends = await User.find({ id: { $in: user.friends } }, { password: 0 });
+  res.json(friends);
+});
+
+// Remove a friend (from both users, and delete chat messages)
+app.post('/api/remove-friend', authMiddleware, async (req: Request, res: Response): Promise<void> => {
+  const userId = (req as any).user.id;
+  const { friendId } = req.body;
+  if (!friendId) { res.status(400).json({ error: 'Missing friendId' }); return; }
+  const user = await User.findOne({ id: userId });
+  const friend = await User.findOne({ id: friendId });
+  if (!user || !friend) { res.status(404).json({ error: 'User not found' }); return; }
+  user.friends = user.friends.filter(f => f !== friendId);
+  friend.friends = friend.friends.filter(f => f !== userId);
+  await user.save();
+  await friend.save();
+  await Message.deleteMany({
+    $or: [
+      { sender: userId, receiver: friendId },
+      { sender: friendId, receiver: userId }
+    ]
+  });
+  res.json({ message: 'Friend removed and chat deleted' });
+});
+
 io.on('connection', (socket) => {
   console.log('🟢 User connected:', socket.id);
 

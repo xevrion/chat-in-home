@@ -32,6 +32,7 @@ function App() {
   const [messages, setMessages] = useState<ChatMap>({});
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+  const [friends, setFriends] = useState<User[]>([]);
 
   // Global loader state
   const [globalLoading, setGlobalLoading] = useState(true);
@@ -137,6 +138,15 @@ function App() {
     }
   }, [token, user]);
 
+  // Fetch friends list after login
+  useEffect(() => {
+    if (token && user) {
+      axios.get(`${import.meta.env.VITE_API_URL}/api/friends`)
+        .then(res => setFriends(res.data))
+        .catch(() => setFriends([]));
+    }
+  }, [token, user]);
+
   // Logout handler
   const handleLogout = () => {
     setUser(null);
@@ -175,6 +185,7 @@ function App() {
               selectedUserId={selectedUserId}
               currentUser={user!}
               onlineUsers={onlineUsers}
+              friends={friends}
             />
           )}
         </div>
@@ -198,6 +209,7 @@ function App() {
                   receiverId={selectedUserId}
                   messages={messages}
                   setMessages={setMessages}
+                  friends={friends}
                   onlineUsers={onlineUsers}
                 />
               </div>
@@ -230,6 +242,7 @@ function App() {
                 selectedUserId={selectedUserId}
                 currentUser={user!}
                 onlineUsers={onlineUsers}
+                friends={friends}
               />
             </motion.div>
           ) : (
@@ -268,6 +281,7 @@ function App() {
                   receiverId={selectedUserId}
                   messages={messages}
                   setMessages={setMessages}
+                  friends={friends}
                   onlineUsers={onlineUsers}
                 />
               </div>

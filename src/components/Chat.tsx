@@ -17,6 +17,7 @@ type ChatProps = {
   receiverId: string;
   messages: ChatMap;
   setMessages: React.Dispatch<React.SetStateAction<ChatMap>>;
+  friends: any[];
   onlineUsers?: string[];
   setChatLoaded?: (v: boolean) => void;
 };
@@ -42,6 +43,7 @@ export default function Chat({
   receiverId,
   messages,
   setMessages,
+  friends,
   onlineUsers = [],
   setChatLoaded
 }: ChatProps) {
@@ -53,17 +55,15 @@ export default function Chat({
   const [typingUser, setTypingUser] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!receiverId) return;
-    axios.get(`${API}/api/users/${receiverId}`)
-      .then(res => {
-        setReceiver(res.data);
-        setChatLoaded && setChatLoaded(true);
-      })
-      .catch(() => {
-        setReceiver(null);
-        if (setChatLoaded) setChatLoaded(true);
-      });
-  }, [receiverId, setChatLoaded]);
+    if (!receiverId || !Array.isArray(friends)) {
+      setReceiver(null);
+      setChatLoaded && setChatLoaded(true);
+      return;
+    }
+    const found = friends.find(u => u.id === receiverId);
+    setReceiver(found || null);
+    setChatLoaded && setChatLoaded(true);
+  }, [receiverId, friends, setChatLoaded]);
 
   // Auto-scroll to bottom on new message
   useEffect(() => {
@@ -147,10 +147,8 @@ export default function Chat({
 
   return (
     <div className="flex flex-col flex-1 bg-gray-100 dark:bg-gray-950 min-h-0">
-      {receiver ? (
+      {receiver && (
         <ChatHeader user={receiver} onlineUsers={onlineUsers} />
-      ) : (
-        <div className="p-4 text-gray-500">User not found or loading...</div>
       )}
       <div className="flex-1 min-h-0 overflow-y-auto">
         <Messages
