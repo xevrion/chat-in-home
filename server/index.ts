@@ -9,10 +9,15 @@ import jwt from 'jsonwebtoken';
 require('dotenv').config();
 // or, if using ES modules:
 import dotenv from 'dotenv';
+import cors from 'cors';
 dotenv.config();
 
 const app = express();
 app.use(express.json()); // Add JSON body parsing
+app.use(cors({
+  origin: 'https://xevrion-chatify.vercel.app', // your Vercel frontend URL
+  credentials: true
+}));
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: { origin: '*' }
