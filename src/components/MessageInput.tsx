@@ -17,10 +17,10 @@ export default function MessageInput({ onSend, username, receiverId }: Props) {
   };
 
   return (
-    <div className="p-4 border-t flex gap-2">
+    <div className="p-4 border-t border-gray-200 dark:border-gray-800 flex gap-2">
       <input
         type="text"
-        className="flex-1 border rounded px-4 py-2 text-sm"
+        className="flex-1 border rounded px-4 py-2 text-sm bg-white dark:bg-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700"
         placeholder="Type a message..."
         value={text}
         onChange={(e) => {
@@ -34,7 +34,7 @@ export default function MessageInput({ onSend, username, receiverId }: Props) {
         onKeyDown={(e) => e.key === "Enter" && handleSend()}
       />
       <button
-        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 dark:bg-blue-700 dark:hover:bg-blue-800"
         onClick={handleSend}
       >
         Send

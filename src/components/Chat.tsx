@@ -1,12 +1,39 @@
-import { useEffect, useState } from "react";
 import ChatHeader from "./ChatHeader";
 import Messages from "./Messages";
 import MessageInput from "./MessageInput";
 import { socket } from "../lib/socket";
-import { messages as initialMessages } from "../data/messages";
 import users from "../data/users";
+import type { Message } from "../App";
+import { useEffect, useRef } from "react";
+import axios from "axios";
 
-const getChatId = (a: string, b: string) => [a, b].sort().join("_");
+const getChatId = (a: string, b: string): string => [a, b].sort().join("_");
+
+type ChatMap = { [key: string]: Message[] };
+
+type ChatProps = {
+  username: string;
+  receiverId: string;
+  messages: ChatMap;
+  setMessages: React.Dispatch<React.SetStateAction<ChatMap>>;
+  onlineUsers?: string[];
+};
+
+const statusRank = (status: string) => {
+  if (status === "seen") return 2;
+  if (status === "delivered") return 1;
+  return 0;
+};
+
+const mergeMessages = (oldMsgs: Message[], newMsgs: Message[]) => {
+  const byId = new Map<number, Message>();
+  [...oldMsgs, ...newMsgs].forEach(msg => {
+    if (!byId.has(msg.id) || statusRank(msg.status) > statusRank(byId.get(msg.id)!.status)) {
+      byId.set(msg.id, msg);
+    }
+  });
+  return Array.from(byId.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
+};
 
 export default function Chat({
   username,
@@ -14,29 +41,18 @@ export default function Chat({
   messages,
   setMessages,
   onlineUsers = [],
-}: {
-  username: string;
-  receiverId: string;
-  messages: { [key: string]: any[] };
-  setMessages: React.Dispatch<React.SetStateAction<{ [key: string]: any[] }>>;
-  onlineUsers?: string[];
-}) {
-  const [isTyping, setIsTyping] = useState(false);
-  const [typingUser, setTypingUser] = useState<string | null>(null);
-  type Message = {
-    id: number;
-    sender: string;
-    receiver: string;
-    text: string;
-    date: Date;
-    status: "sent" | "delivered" | "seen";
-  };
-
-  type ChatMap = {
-    [key: string]: Message[]; // key = receiverId
-  };
-
+}: ChatProps) {
   const receiver = users.find((u) => u.id === receiverId);
+  const chatId = getChatId(username, receiverId);
+  const chatMessages = messages[chatId] || [];
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom on new message
+  useEffect(() => {
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [chatMessages.length]);
 
   const handleSend = (text: string) => {
     const newMessage: Message = {
@@ -47,67 +63,66 @@ export default function Chat({
       date: new Date(),
       status: "sent",
     };
-
-    const chatId = getChatId(username, receiverId);
-
     setMessages((prev) => ({
       ...prev,
       [chatId]: [...(prev[chatId] || []), newMessage],
     }));
-
     socket.emit("chat:message", newMessage);
   };
 
   useEffect(() => {
-    socket.on("chat:message", (msg) => {
-      // Add the message to state
-      setMessages((prev) => {
-        const chatId = getChatId(msg.sender, msg.receiver);
-        return {
-          ...prev,
-          [chatId]: [...(prev[chatId] || []), { ...msg, date: new Date(msg.date) }],
-        };
+    const chatId = getChatId(username, receiverId);
+    const chatMessages = messages[chatId] || [];
+    // Find all unseen messages from the other user
+    const unseen = chatMessages.filter(
+      (msg) => msg.sender === receiverId && msg.status !== "seen"
+    );
+    if (unseen.length > 0) {
+      unseen.forEach((msg) => {
+        socket.emit("chat:seen", {
+          messageId: msg.id,
+          sender: msg.sender,
+          receiver: msg.receiver,
+        });
       });
-      // If this client is the recipient, emit delivered
-      if (msg.receiver === username) {
-        socket.emit("chat:delivered", { messageId: msg.id, sender: msg.sender, receiver: msg.receiver });
+    }
+  }, [receiverId, messages, username]);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!username || !receiverId) return;
+      const chatId = getChatId(username, receiverId);
+      try {
+        const res = await axios.get(`/api/messages?user1=${username}&user2=${receiverId}`);
+        // Convert date strings to Date objects and status to correct type
+        const loaded = res.data.map((msg: any) => ({
+          ...msg,
+          date: new Date(msg.date),
+          status: (msg.status === 'sent' || msg.status === 'delivered' || msg.status === 'seen') ? msg.status : 'sent'
+        }));
+        setMessages((prev) => ({
+          ...prev,
+          [chatId]: mergeMessages(prev[chatId] || [], loaded),
+        }));
+      } catch (err) {
+        console.error("Failed to load chat history", err);
       }
-    });
-
-    let typingTimeout: NodeJS.Timeout;
-
-    socket.on("chat:typing", ({ sender, receiver }) => {
-      // console.log("TYPING RECEIVED:", sender, "->", receiver); // 👈 test
-      if (receiver === username && sender === receiverId) {
-        setTypingUser(sender);
-        setIsTyping(true);
-
-        clearTimeout(typingTimeout);
-        typingTimeout = setTimeout(() => {
-          setIsTyping(false);
-          setTypingUser(null);
-        }, 1500); // hides after 1.5s of no typing
-      }
-    });
-
-    return () => {
-      socket.off("chat:message");
-      socket.off("chat:typing");
-      clearTimeout(typingTimeout);
     };
-  }, []);
+    fetchHistory();
+  }, [username, receiverId]);
 
-  const chatId = getChatId(username, receiverId);
   return (
-    <div className="flex flex-col flex-1 bg-white">
+    <div className="flex flex-col flex-1 bg-gray-100 dark:bg-gray-950 min-h-0">
       <ChatHeader user={receiver} onlineUsers={onlineUsers} />
-      <Messages
-        messages={messages[chatId] || []}
-        username={username}
-        isTyping={isTyping}
-        typingUser={typingUser}
-      />
-
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <Messages
+          messages={chatMessages}
+          username={username}
+          isTyping={false}
+          typingUser={null}
+          bottomRef={bottomRef}
+        />
+      </div>
       <MessageInput
         onSend={handleSend}
         username={username}

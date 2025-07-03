@@ -7,11 +7,16 @@
   "scripts": {
     "dev": "npm-run-all --parallel dev:react dev:electron",
     "dev:react": "vite",
-    "dev:electron": "wait-on http://localhost:5173 && electron ."
+    "dev:electron": "wait-on http://localhost:5173 && electron .",
+    "build": "vite build"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.11",
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^17.0.1",
     "framer-motion": "^12.23.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.16.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "socket.io-client": "^4.8.1",
@@ -19,6 +24,9 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/mongoose": "^5.11.96",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.5.2",
