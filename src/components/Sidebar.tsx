@@ -1,12 +1,35 @@
-export default function Sidebar() {
+import users from "../data/users";
+
+
+export default function Sidebar({
+  onSelectUser,
+  selectedUserId,
+  currentUsername,
+  onlineUsers=[],
+}: {
+  onSelectUser: (id: string) => void;
+  selectedUserId: string;
+  currentUsername: string;
+  onlineUsers?: string[];
+}) {
+  const filteredUsers = users.filter((u) => u.id !== currentUsername);
+
   return (
-    <div className="w-64 bg-gray-900 text-white p-4">
-      <h2 className="text-xl font-bold mb-4">Chats</h2>
-      <ul className="space-y-2">
-        <li className="p-2 rounded hover:bg-gray-800 cursor-pointer">John</li>
-        <li className="p-2 rounded hover:bg-gray-800 cursor-pointer">Alice</li>
-        <li className="p-2 rounded hover:bg-gray-800 cursor-pointer">Bob</li>
-      </ul>
+    <div className="bg-gray-200 p-4 space-y-2 overflow-y-auto h-full lg:w-64">
+      <h2 className="text-lg font-semibold mb-2">Chats</h2>
+      {filteredUsers.map((user) => (
+        <button
+          key={user.id}
+          onClick={() => onSelectUser(user.id)}
+          className={`block w-full text-left p-2 rounded ${
+            selectedUserId === user.id
+              ? "bg-white font-semibold"
+              : "hover:bg-gray-300"
+          }`}
+        >
+          {onlineUsers.includes(user.id) ? "🟢" : "⚪"} {user.name}
+        </button>
+      ))}
     </div>
   );
 }
