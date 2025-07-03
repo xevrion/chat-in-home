@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
+const API = import.meta.env.VITE_API_URL;
+
 interface User {
   id: string;
   name: string;
@@ -24,7 +26,7 @@ export default function Sidebar({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get('/api/users')
+    axios.get(`${API}/api/users`)
       .then(res => setUsers(res.data))
       .catch(err => console.error('Failed to fetch users', err))
       .finally(() => setLoading(false));

@@ -7,6 +7,8 @@ import type { Message } from "../App";
 import { useEffect, useRef } from "react";
 import axios from "axios";
 
+const API = import.meta.env.VITE_API_URL;
+
 const getChatId = (a: string, b: string): string => [a, b].sort().join("_");
 
 type ChatMap = { [key: string]: Message[] };
@@ -93,7 +95,7 @@ export default function Chat({
       if (!username || !receiverId) return;
       const chatId = getChatId(username, receiverId);
       try {
-        const res = await axios.get(`/api/messages?user1=${username}&user2=${receiverId}`);
+        const res = await axios.get(`${API}/api/messages?user1=${username}&user2=${receiverId}`);
         // Convert date strings to Date objects and status to correct type
         const loaded = res.data.map((msg: any) => ({
           ...msg,

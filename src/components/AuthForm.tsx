@@ -2,6 +2,8 @@ import { useState } from 'react';
 import axios from 'axios';
 import ThemeSwitch from './ThemeSwitch';
 
+const API = import.meta.env.VITE_API_URL;
+
 interface AuthFormProps {
   onLogin: (user: { id: string; name: string; email: string }, token: string) => void;
   theme: string;
@@ -23,11 +25,11 @@ export default function AuthForm({ onLogin, theme, setTheme }: AuthFormProps) {
     setLoading(true);
     try {
       if (mode === 'register') {
-        const res = await axios.post('/api/register', { name, id, email, password });
+        const res = await axios.post(`${API}/api/register`, { name, id, email, password });
         setMode('login');
         setError('Registration successful! Please log in.');
       } else {
-        const res = await axios.post('/api/login', { id, email, password });
+        const res = await axios.post(`${API}/api/login`, { id, email, password });
         localStorage.setItem('token', res.data.token);
         onLogin(res.data.user, res.data.token);
       }
