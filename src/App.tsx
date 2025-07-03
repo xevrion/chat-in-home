@@ -24,13 +24,6 @@ type ChatMap = { [key: string]: Message[] };
 
 type User = { id: string; name: string; email: string };
 
-// Global loader state
-const [globalLoading, setGlobalLoading] = useState(true);
-
-// Track when users and chat receiver are loaded
-const [usersLoaded, setUsersLoaded] = useState(false);
-const [chatLoaded, setChatLoaded] = useState(false);
-
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
@@ -39,6 +32,12 @@ function App() {
   const [messages, setMessages] = useState<ChatMap>({});
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+
+  // Global loader state
+  const [globalLoading, setGlobalLoading] = useState(true);
+  // Track when users and chat receiver are loaded
+  const [usersLoaded, setUsersLoaded] = useState(false);
+  const [chatLoaded, setChatLoaded] = useState(false);
 
   // Set axios default auth header when token changes
   useEffect(() => {
