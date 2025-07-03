@@ -59,7 +59,10 @@ export default function Chat({
         setReceiver(res.data);
         setChatLoaded && setChatLoaded(true);
       })
-      .catch(() => setReceiver(null));
+      .catch(() => {
+        setReceiver(null);
+        setChatLoaded && setChatLoaded(true);
+      });
   }, [receiverId, setChatLoaded]);
 
   // Auto-scroll to bottom on new message
