@@ -28,6 +28,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 // Map socket.id -> username
 const users = new Map();
 
+// --- SOCKET.IO USER MAP FOR FRIEND EVENTS ---
+const userSocketMap = new Map();
+
 const uri = process.env.MONGODB_URI;
 
 mongoose.set('strictQuery', true);
@@ -164,6 +167,9 @@ app.post('/api/friend-request', authMiddleware, async (req: Request, res: Respon
   toUser.friendRequests.push({ from: fromId, to, status: 'pending' });
   await toUser.save();
   res.json({ message: 'Friend request sent' });
+  // After saving request:
+  const toSocket = userSocketMap.get(to);
+  if (toSocket) io.to(toSocket).emit('friend:request', { from: fromId, to });
 });
 
 // Get all friend requests (incoming and outgoing)
@@ -178,7 +184,7 @@ app.get('/api/friend-requests', authMiddleware, async (req: Request, res: Respon
   res.json({ incoming, outgoing });
 });
 
-// Accept a friend request
+// Accept friend request
 app.post('/api/friend-request/:requestId/accept', authMiddleware, async (req: Request, res: Response): Promise<void> => {
   const userId = (req as any).user.id;
   const { requestId } = req.params;
@@ -198,9 +204,14 @@ app.post('/api/friend-request/:requestId/accept', authMiddleware, async (req: Re
     await fromUser.save();
   }
   res.json({ message: 'Friend request accepted' });
+  // After updating both users:
+  const fromSocket = userSocketMap.get(request.from);
+  const toSocket = userSocketMap.get(request.to);
+  if (fromSocket) io.to(fromSocket).emit('friend:accept', { from: request.from, to: request.to });
+  if (toSocket) io.to(toSocket).emit('friend:accept', { from: request.from, to: request.to });
 });
 
-// Decline a friend request
+// Decline friend request
 app.post('/api/friend-request/:requestId/decline', authMiddleware, async (req: Request, res: Response): Promise<void> => {
   const userId = (req as any).user.id;
   const { requestId } = req.params;
@@ -211,6 +222,11 @@ app.post('/api/friend-request/:requestId/decline', authMiddleware, async (req: R
   request.status = 'declined';
   await user.save();
   res.json({ message: 'Friend request declined' });
+  // After updating request:
+  const fromSocket = userSocketMap.get(request.from);
+  const toSocket = userSocketMap.get(request.to);
+  if (fromSocket) io.to(fromSocket).emit('friend:decline', { from: request.from, to: request.to });
+  if (toSocket) io.to(toSocket).emit('friend:decline', { from: request.from, to: request.to });
 });
 
 // Get friends list
@@ -222,7 +238,7 @@ app.get('/api/friends', authMiddleware, async (req: Request, res: Response): Pro
   res.json(friends);
 });
 
-// Remove a friend (from both users, and delete chat messages)
+// Remove friend (from both users, and delete chat messages)
 app.post('/api/remove-friend', authMiddleware, async (req: Request, res: Response): Promise<void> => {
   const userId = (req as any).user.id;
   const { friendId } = req.body;
@@ -241,6 +257,11 @@ app.post('/api/remove-friend', authMiddleware, async (req: Request, res: Respons
     ]
   });
   res.json({ message: 'Friend removed and chat deleted' });
+  // After removing from both users:
+  const user1Socket = userSocketMap.get(userId);
+  const user2Socket = userSocketMap.get(friendId);
+  if (user1Socket) io.to(user1Socket).emit('friend:remove', { from: userId, to: friendId });
+  if (user2Socket) io.to(user2Socket).emit('friend:remove', { from: userId, to: friendId });
 });
 
 io.on('connection', (socket) => {
@@ -249,6 +270,7 @@ io.on('connection', (socket) => {
   // User joins with their username
   socket.on('user:join', ({ username }) => {
     users.set(socket.id, username);
+    userSocketMap.set(username, socket.id);
     // Send the current online users to the new user
     const onlineUsers = Array.from(users.values());
     socket.emit('user:online-list', { onlineUsers });
@@ -312,6 +334,7 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     const username = users.get(socket.id);
     users.delete(socket.id);
+    userSocketMap.delete(username!); // Remove from userSocketMap on disconnect
     if (username) {
       socket.broadcast.emit('user:offline', { username });
       console.log(`🔴 ${username} disconnected`);

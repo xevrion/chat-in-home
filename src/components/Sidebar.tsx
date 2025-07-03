@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { socket } from "../lib/socket";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -55,6 +56,7 @@ interface SidebarProps {
   currentUser: User;
   onlineUsers: string[];
   friends: User[];
+  onFriendsChange?: () => void;
 }
 
 export default function Sidebar({
@@ -62,7 +64,8 @@ export default function Sidebar({
   selectedUserId,
   currentUser,
   onlineUsers,
-  friends
+  friends,
+  onFriendsChange
 }: SidebarProps) {
   const [friendInput, setFriendInput] = useState("");
   const [requests, setRequests] = useState<{ incoming: FriendRequest[]; outgoing: FriendRequest[] }>({ incoming: [], outgoing: [] });
@@ -83,9 +86,24 @@ export default function Sidebar({
     }
     setLoadingRequests(false);
   };
+  // Fetch friends
+  const fetchFriends = async () => {
+    if (onFriendsChange) onFriendsChange();
+  };
 
   useEffect(() => {
     fetchRequests();
+    // Listen for real-time friend events
+    socket.on("friend:request", fetchRequests);
+    socket.on("friend:accept", () => { fetchRequests(); fetchFriends(); });
+    socket.on("friend:decline", fetchRequests);
+    socket.on("friend:remove", () => { fetchRequests(); fetchFriends(); });
+    return () => {
+      socket.off("friend:request", fetchRequests);
+      socket.off("friend:accept");
+      socket.off("friend:decline", fetchRequests);
+      socket.off("friend:remove");
+    };
   }, []);
 
   // Send friend request
@@ -110,9 +128,7 @@ export default function Sidebar({
   // Accept/decline friend request
   const handleAccept = async (id: string) => {
     await axios.post(`${API}/api/friend-request/${id}/accept`);
-    fetchRequests();
-    // Optionally: trigger parent to refresh friends
-    window.location.reload(); // quick hack to refresh friends in App
+    // fetchRequests and fetchFriends will be triggered by socket event
   };
   const handleDecline = async (id: string) => {
     await axios.post(`${API}/api/friend-request/${id}/decline`);
@@ -129,8 +145,7 @@ export default function Sidebar({
     await axios.post(`${API}/api/remove-friend`, { friendId: pendingRemove });
     setModalOpen(false);
     setPendingRemove(null);
-    fetchRequests();
-    window.location.reload(); // quick hack to refresh friends in App
+    // fetchRequests and fetchFriends will be triggered by socket event
   };
 
   // Notification badge for incoming requests

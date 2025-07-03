@@ -186,6 +186,12 @@ function App() {
               currentUser={user!}
               onlineUsers={onlineUsers}
               friends={friends}
+              onFriendsChange={async () => {
+                if (token && user) {
+                  const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/friends`);
+                  setFriends(res.data);
+                }
+              }}
             />
           )}
         </div>
@@ -243,6 +249,12 @@ function App() {
                 currentUser={user!}
                 onlineUsers={onlineUsers}
                 friends={friends}
+                onFriendsChange={async () => {
+                  if (token && user) {
+                    const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/friends`);
+                    setFriends(res.data);
+                  }
+                }}
               />
             </motion.div>
           ) : (
