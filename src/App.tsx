@@ -146,28 +146,11 @@ function App() {
     localStorage.removeItem('token');
   };
 
-  // Show loader until both are loaded
-  useEffect(() => {
-    if (usersLoaded && (selectedUserId ? chatLoaded : true)) {
-      setGlobalLoading(false);
-    } else {
-      setGlobalLoading(true);
-    }
-  }, [usersLoaded, chatLoaded, selectedUserId]);
-
   if (!user || !token) {
     return <AuthForm onLogin={(user, token) => { setUser(user); setToken(token); }} theme={theme} setTheme={setTheme} />;
   }
 
-  if (globalLoading) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white dark:bg-gray-900 z-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-        <span className="ml-4 text-lg text-gray-700 dark:text-gray-200">Loading app...</span>
-      </div>
-    );
-  }
-
+  // Remove global loader: always render main UI after authentication
   return (
     <div className={`flex h-screen w-full overflow-hidden ${theme === 'dark' ? 'dark' : ''}`}>
       {/* Top-right controls (desktop and mobile sidebar only) */}
@@ -192,7 +175,6 @@ function App() {
               selectedUserId={selectedUserId}
               currentUser={user!}
               onlineUsers={onlineUsers}
-              setUsersLoaded={setUsersLoaded}
             />
           )}
         </div>
@@ -217,7 +199,6 @@ function App() {
                   messages={messages}
                   setMessages={setMessages}
                   onlineUsers={onlineUsers}
-                  setChatLoaded={setChatLoaded}
                 />
               </div>
             </div>
@@ -249,7 +230,6 @@ function App() {
                 selectedUserId={selectedUserId}
                 currentUser={user!}
                 onlineUsers={onlineUsers}
-                setUsersLoaded={setUsersLoaded}
               />
             </motion.div>
           ) : (
@@ -289,7 +269,6 @@ function App() {
                   messages={messages}
                   setMessages={setMessages}
                   onlineUsers={onlineUsers}
-                  setChatLoaded={setChatLoaded}
                 />
               </div>
             </motion.div>
