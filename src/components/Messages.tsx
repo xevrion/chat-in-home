@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-import { messages as initialMessages } from "../data/messages";
 
 type Message = {
   id: number;

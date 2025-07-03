@@ -2,7 +2,6 @@ import ChatHeader from "./ChatHeader";
 import Messages from "./Messages";
 import MessageInput from "./MessageInput";
 import { socket } from "../lib/socket";
-import users from "../data/users";
 import type { Message } from "../App";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
@@ -44,12 +43,19 @@ export default function Chat({
   setMessages,
   onlineUsers = [],
 }: ChatProps) {
-  const receiver = users.find((u) => u.id === receiverId);
+  const [receiver, setReceiver] = useState<any>(null);
   const chatId = getChatId(username, receiverId);
   const chatMessages = messages[chatId] || [];
   const bottomRef = useRef<HTMLDivElement>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [typingUser, setTypingUser] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!receiverId) return;
+    axios.get(`${API}/api/users/${receiverId}`)
+      .then(res => setReceiver(res.data))
+      .catch(() => setReceiver(null));
+  }, [receiverId]);
 
   // Auto-scroll to bottom on new message
   useEffect(() => {
