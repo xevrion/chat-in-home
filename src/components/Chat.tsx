@@ -146,7 +146,7 @@ export default function Chat({
   }, [username, receiverId]);
 
   return (
-    <div className="flex flex-col flex-1 bg-gray-100 dark:bg-gray-950 min-h-0">
+    <div className="flex flex-col flex-1 min-h-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg rounded-2xl shadow-xl m-2 overflow-hidden">
       {receiver && (
         <ChatHeader user={receiver} onlineUsers={onlineUsers} />
       )}
