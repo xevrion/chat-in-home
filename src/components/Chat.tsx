@@ -145,12 +145,13 @@ export default function Chat({
     };
   }, [username, receiverId]);
 
-  if (!receiver) {
-    return <div className="flex-1 flex items-center justify-center text-gray-500">Loading chat...</div>;
-  }
   return (
     <div className="flex flex-col flex-1 bg-gray-100 dark:bg-gray-950 min-h-0">
-      <ChatHeader user={receiver} onlineUsers={onlineUsers} />
+      {receiver ? (
+        <ChatHeader user={receiver} onlineUsers={onlineUsers} />
+      ) : (
+        <div className="p-4 text-gray-500">User not found or loading...</div>
+      )}
       <div className="flex-1 min-h-0 overflow-y-auto">
         <Messages
           messages={chatMessages}
