@@ -61,7 +61,7 @@ export default function Chat({
       })
       .catch(() => {
         setReceiver(null);
-        setChatLoaded && setChatLoaded(true);
+        if (setChatLoaded) setChatLoaded(true);
       });
   }, [receiverId, setChatLoaded]);
 
