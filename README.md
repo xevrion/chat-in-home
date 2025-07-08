@@ -1,69 +1,119 @@
-# React + TypeScript + Vite
+# 🏠 Chat-in-Home
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A **real-time**, **secure**, and **minimal** chat application designed for private group communication within a shared environment — be it a home, a hostel, or a small team.
 
-Currently, two official plugins are available:
+![GitHub repo size](https://img.shields.io/github/repo-size/xevrion/chat-in-home?color=blue)
+![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## Expanding the ESLint configuration
+## ✨ Features
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- 🔐 **Private Real-Time Messaging** – Built using **Socket.IO** for seamless live communication.
+- 🧑‍🤝‍🧑 **User-Friendly Interface** – Clean and intuitive UI powered by **React + TailwindCSS**.
+- ⚙️ **Backend Powered by Express & MongoDB** – Fast, scalable, and easy to extend.
+- 🌐 **Cross-Device Compatible** – Responsive design for desktops and mobile devices.
+- 💬 **Typing Indicator**, **User Avatars**, and **Timestamps** – For a modern chat feel.
+- 📦 **Modular Codebase** – Easy to understand and contribute to.
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+## 🖼️ Preview
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+![Chat-in-Home Screenshot](preview.png) <!-- Replace with actual screenshot path -->
+
+---
+
+## 🚀 Getting Started
+
+### 1. Clone the Repo
+
+```bash
+git clone https://github.com/xevrion/chat-in-home.git
+cd chat-in-home
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Set Up the Server
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cd server
+npm install
 ```
+
+Create a `.env` file in the `server/` directory:
+
+```env
+PORT=5000
+MONGODB_URI=your_mongodb_connection_string
+```
+
+Start the server:
+
+```bash
+npm start
+```
+
+### 3. Set Up the Client
+
+Open a new terminal:
+
+```bash
+cd client
+npm install
+npm run dev
+```
+
+---
+
+## 🧠 Tech Stack
+
+| Frontend | Backend | Database | Real-time |
+|----------|---------|----------|------------|
+| React + TailwindCSS | Express.js | MongoDB | Socket.IO |
+
+---
+
+## 📁 Folder Structure
+
+```
+chat-in-home/
+├── client/      # React frontend
+├── server/      # Express backend
+└── README.md
+```
+
+---
+
+## 🛠️ Planned Features
+
+- ✅ Dark & Light Themes
+- ✅ Typing Indicators
+- ⏳ Notifications on new messages
+- ⏳ Emoji Support
+- ⏳ Chat Rooms
+- ⏳ File Sharing
+
+---
+
+## 🧑‍💻 Contributing
+
+Contributions are welcome! Please fork the repo, make changes, and open a pull request.
+
+```bash
+# Create a new branch
+git checkout -b feature/your-feature-name
+```
+
+---
+
+## 📜 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+## 📫 Contact
+
+Made with ❤️ by [Xevrion](https://github.com/xevrion)  
+Drop a ⭐ if you like it!
