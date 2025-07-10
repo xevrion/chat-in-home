@@ -59,7 +59,6 @@ npm start
 Open a new terminal:
 
 ```bash
-cd client
 npm install
 npm run dev
 ```
