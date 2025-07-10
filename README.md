@@ -77,7 +77,7 @@ npm run dev
 
 ```
 chat-in-home/
-├── client/      # React frontend
+├── # React frontend
 ├── server/      # Express backend
 └── README.md
 ```
